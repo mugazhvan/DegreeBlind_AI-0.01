@@ -19,6 +19,7 @@ async def get_report_history(
         select(Analysis)
         .options(selectinload(Analysis.repository), selectinload(Analysis.report))
         .where(Analysis.user_id == current_user.id)
+        .where(Analysis.is_deleted == False)
         .order_by(Analysis.created_at.desc())
     )
     result = await db.execute(stmt)
@@ -45,3 +46,23 @@ async def get_report_history(
             "report_data": a.report.report_json if a.report else None
         })
     return history
+
+@router.delete("/{analysis_id}")
+async def delete_report(
+    analysis_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Soft delete a report from history."""
+    stmt = select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == current_user.id)
+    result = await db.execute(stmt)
+    analysis = result.scalar_one_or_none()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Report not found")
+        
+    analysis.is_deleted = True
+    db.add(analysis)
+    await db.commit()
+    
+    return {"message": "Report deleted successfully"}

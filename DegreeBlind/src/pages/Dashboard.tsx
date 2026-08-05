@@ -1,64 +1,97 @@
-import { useState, useEffect } from 'react';
-import RepositoryInput from '../components/RepositoryInput';
-import { getDashboardStats } from '../services/api';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuthStore } from '@/stores/auth-store';
+import { getDashboardStats, getLatestCareerIntelligence } from '@/services/api';
+import { MetricCard } from '@/components/metric-card';
+import { ScoreRing } from '@/components/score-ring';
+import { GlassCard } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { GitBranch, FileText, Briefcase, MessageSquare, GraduationCap, BarChart3, ArrowRight, Activity, Users, Star } from 'lucide-react';
 
-const Dashboard = () => {
-  const [stats, setStats] = useState({
-    repositories_analysed: 0,
-    candidates_evaluated: 0,
-    average_skill_score: 'N/A'
-  });
-  const [loading, setLoading] = useState(true);
+const quickActions = [
+  { label: 'Analyze GitHub', to: '/app/github', icon: GitBranch, color: 'from-emerald-500/10 to-emerald-600/10' },
+  { label: 'Upload Resume', to: '/app/resume', icon: FileText, color: 'from-blue-500/10 to-blue-600/10' },
+  { label: 'Career Report', to: '/app/career', icon: Briefcase, color: 'from-purple-500/10 to-purple-600/10' },
+  { label: 'Mock Interview', to: '/app/interview', icon: MessageSquare, color: 'from-orange-500/10 to-orange-600/10' },
+  { label: 'Learning Path', to: '/app/learning', icon: GraduationCap, color: 'from-pink-500/10 to-pink-600/10' },
+  { label: 'View Reports', to: '/app/reports', icon: BarChart3, color: 'from-cyan-500/10 to-cyan-600/10' },
+];
+
+export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user);
+  const [stats, setStats] = useState<any>(null);
+  const [careerScore, setCareerScore] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await getDashboardStats();
-        if (data) {
-          setStats(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
+    getDashboardStats().then(setStats).catch(() => {});
+    getLatestCareerIntelligence().then((d) => setCareerScore(d?.career_score)).catch(() => {});
   }, []);
 
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      {/* Hero */}
-      <div className="text-center">
-        <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 tracking-tight sm:text-6xl drop-shadow-sm pb-2">
-          Analyser AI
-        </h1>
-        <p className="mt-4 text-lg text-gray-700 max-w-lg mx-auto font-medium drop-shadow-sm">
-          Analyze GitHub repositories to understand real developer skills.
-        </p>
-        <RepositoryInput />
+    <div className="space-y-8">
+      <div className="flex items-start justify-between">
+        <div>
+          <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight">
+            {greeting()}, {user?.name?.split(' ')[0] || 'there'}
+          </motion.h1>
+          <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-sm text-muted-foreground mt-1">
+            Here&apos;s your career intelligence overview.
+          </motion.p>
+        </div>
+        {careerScore !== null && (
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 }}>
+            <ScoreRing score={careerScore} size={80} strokeWidth={6} label="Career Score" />
+          </motion.div>
+        )}
       </div>
 
-      {/* Stat cards */}
-      <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-5">
-        {[
-          { label: 'Repositories Analysed', icon: '📊', value: stats.repositories_analysed },
-          { label: 'Candidates Evaluated', icon: '👤', value: stats.candidates_evaluated },
-          { label: 'Average Skill Score', icon: '⭐', value: stats.average_skill_score },
-        ].map((stat) => (
-          <div key={stat.label} className="glass-panel rounded-2xl p-6 text-center transform hover:-translate-y-1 transition-all duration-300">
-            <span className="text-3xl mb-3 block drop-shadow-md">{stat.icon}</span>
-            <h3 className="text-xs font-semibold text-[#1d1d1f]/70 uppercase tracking-wider mb-2">{stat.label}</h3>
-            {loading ? (
-              <p className="text-[#1d1d1f]/50 italic text-sm animate-pulse">Loading...</p>
-            ) : (
-              <p className="text-3xl font-bold text-[#1d1d1f] drop-shadow-sm">{stat.value}</p>
-            )}
-          </div>
-        ))}
+      {stats && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <MetricCard icon={Activity} label="Repositories Analyzed" value={stats.repositories_analysed || 0} />
+          <MetricCard icon={Users} label="Candidates Evaluated" value={stats.candidates_evaluated || 0} />
+          <MetricCard icon={Star} label="Average Skill Score" value={stats.average_skill_score || 'N/A'} />
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-sm font-medium text-muted-foreground mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {quickActions.map((action, i) => (
+            <motion.div key={action.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}>
+              <Link to={action.to}>
+                <GlassCard className="p-4 text-center group hover:border-indigo-500/20 cursor-pointer">
+                  <div className={`w-10 h-10 mx-auto rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-200`}>
+                    <action.icon className="w-4 h-4 text-foreground" />
+                  </div>
+                  <p className="text-xs font-medium text-foreground">{action.label}</p>
+                </GlassCard>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-foreground mb-1">Get your Career Intelligence Report</h3>
+            <p className="text-sm text-muted-foreground">Analyze a GitHub repo and upload your resume to unlock your full career profile.</p>
+          </div>
+          <Button asChild variant="brand" size="default" className="shrink-0 group">
+            <Link to="/app/github">
+              Start <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </Button>
+        </div>
+      </GlassCard>
     </div>
   );
-};
-
-export default Dashboard;
+}

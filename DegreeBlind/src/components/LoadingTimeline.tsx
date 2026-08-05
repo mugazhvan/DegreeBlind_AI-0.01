@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle, Circle, Loader } from 'lucide-react';
 
 interface Props {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 const LoadingTimeline = ({ onComplete }: Props) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const steps = [
-    'Connecting to GitHub...',
-    'Fetching repository...',
-    'Reading project structure...',
-    'Preparing analysis...',
-    'Waiting for AI backend...',
+    'Connecting to GitHub API...',
+    'Fetching developer profile & public repositories...',
+    'Analyzing multi-project architectures...',
+    'Aggregating code & language metrics...',
+    'Generating AI portfolio intelligence report...',
   ];
 
   useEffect(() => {

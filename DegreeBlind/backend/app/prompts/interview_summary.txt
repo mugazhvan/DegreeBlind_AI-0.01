@@ -1,0 +1,13 @@
+You are an expert technical interviewer summarizing a completed interview session.
+
+Here is the Q&A history:
+{qna_history}
+
+Provide an overall summary of the candidate's performance, along with a list of their strengths and weaknesses.
+
+Output strictly as JSON. No markdown formatting, no backticks, no preamble.
+{{
+  "summary": "string",
+  "strengths": ["string", "string"],
+  "weaknesses": ["string", "string"]
+}}

@@ -1,5 +1,10 @@
+"""
+Core Pydantic schemas shared across the application.
+"""
 from pydantic import BaseModel, ConfigDict
 from typing import Dict, List, Optional
+
+from app.schemas.engineering import EngineeringIntelligenceResponse
 
 
 class RepositoryData(BaseModel):
@@ -22,42 +27,19 @@ class RepositoryData(BaseModel):
     contributorsCount: Optional[int] = None
 
 
-class AIAnalysisReport(BaseModel):
-    problemSolving: Optional[str] = None
-    architecture: Optional[str] = None
-    codeQuality: Optional[str] = None
-    documentation: Optional[str] = None
-    security: Optional[str] = None
-    testing: Optional[str] = None
-    maintainability: Optional[str] = None
-    scalability: Optional[str] = None
-    overallSummary: Optional[str] = None
-
-
-class RecommendedRole(BaseModel):
-    roleName: str
-    confidence: Optional[int] = None
-
-
 class FullReport(BaseModel):
+    """The complete report returned to the frontend after a GitHub analysis."""
     repository: Optional[RepositoryData] = None
     languages: Optional[Dict[str, int]] = None
-    analysis: Optional[AIAnalysisReport] = None
-    roles: Optional[List[RecommendedRole]] = None
-    recommendations: Optional[List[str]] = None
+    analysis: Optional[EngineeringIntelligenceResponse] = None
 
 
-# AI Response Schema as dictated by the prompt instructions
-class NemotronResponseSchema(BaseModel):
-    repository_overview: str
-    technical_strengths: List[str]
-    areas_for_improvement: List[str]
-    engineering_practices: str
-    documentation_review: str
-    security_observations: str
-    testing_review: str
-    architecture_assessment: str
-    maintainability_assessment: str
-    scalability_assessment: str
-    final_summary: str
-    potential_roles: List[str]
+class AnalysisStartResponse(BaseModel):
+    analysis_id: int
+    status: str
+
+
+class AnalysisStatusResponse(BaseModel):
+    status: str
+    error: Optional[str] = None
+    report: Optional[FullReport] = None

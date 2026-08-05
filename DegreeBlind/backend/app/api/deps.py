@@ -52,3 +52,32 @@ async def get_current_user_optional(
     
     result = await db.execute(select(User).where(User.id == int(user_id)))
     return result.scalar_one_or_none()
+
+import time
+from fastapi import Request
+
+# Simple in-memory rate limiter (in production use Redis!)
+RATE_LIMIT_STORE = {}
+
+async def rate_limiter(request: Request):
+    client_ip = request.client.host
+    current_time = time.time()
+    
+    # 5 requests per 60 seconds
+    limit = 5
+    window = 60
+    
+    if client_ip not in RATE_LIMIT_STORE:
+        RATE_LIMIT_STORE[client_ip] = []
+        
+    # Clean old requests
+    RATE_LIMIT_STORE[client_ip] = [
+        timestamp for timestamp in RATE_LIMIT_STORE[client_ip] 
+        if current_time - timestamp < window
+    ]
+    
+    if len(RATE_LIMIT_STORE[client_ip]) >= limit:
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait a moment.")
+        
+    RATE_LIMIT_STORE[client_ip].append(current_time)
+    return True

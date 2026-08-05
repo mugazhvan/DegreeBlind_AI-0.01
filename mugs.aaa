@@ -1,0 +1,433 @@
+warning: in the working copy of 'DegreeBlind/backend/app/api/deps.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/api/router.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/api/v1/analysis.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/api/v1/auth.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/api/v1/reports.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/api/v1/stats.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/db/models.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/main.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/prompts/degree_blind.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/schemas/core.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/services/analysis_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/services/auth_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/app/services/llm_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/backend/requirements.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'DegreeBlind/src/services/api.ts', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/DegreeBlind/backend/app/api/deps.py b/DegreeBlind/backend/app/api/deps.py[m
+[1mindex ffe89e7..770a1c1 100644[m
+[1m--- a/DegreeBlind/backend/app/api/deps.py[m
+[1m+++ b/DegreeBlind/backend/app/api/deps.py[m
+[36m@@ -52,3 +52,32 @@[m [masync def get_current_user_optional([m
+     [m
+     result = await db.execute(select(User).where(User.id == int(user_id)))[m
+     return result.scalar_one_or_none()[m
+[32m+[m
+[32m+[m[32mimport time[m
+[32m+[m[32mfrom fastapi import Request[m
+[32m+[m
+[32m+[m[32m# Simple in-memory rate limiter (in production use Redis!)[m
+[32m+[m[32mRATE_LIMIT_STORE = {}[m
+[32m+[m
+[32m+[m[32masync def rate_limiter(request: Request):[m
+[32m+[m[32m    client_ip = request.client.host[m
+[32m+[m[32m    current_time = time.time()[m
+[32m+[m[41m    [m
+[32m+[m[32m    # 5 requests per 60 seconds[m
+[32m+[m[32m    limit = 5[m
+[32m+[m[32m    window = 60[m
+[32m+[m[41m    [m
+[32m+[m[32m    if client_ip not in RATE_LIMIT_STORE:[m
+[32m+[m[32m        RATE_LIMIT_STORE[client_ip] = [][m
+[32m+[m[41m        [m
+[32m+[m[32m    # Clean old requests[m
+[32m+[m[32m    RATE_LIMIT_STORE[client_ip] = [[m
+[32m+[m[32m        timestamp for timestamp in RATE_LIMIT_STORE[client_ip][m[41m [m
+[32m+[m[32m        if current_time - timestamp < window[m
+[32m+[m[32m    ][m
+[32m+[m[41m    [m
+[32m+[m[32m    if len(RATE_LIMIT_STORE[client_ip]) >= limit:[m
+[32m+[m[32m        raise HTTPException(status_code=429, detail="Too many requests. Please wait a moment.")[m
+[32m+[m[41m        [m
+[32m+[m[32m    RATE_LIMIT_STORE[client_ip].append(current_time)[m
+[32m+[m[32m    return True[m
+[1mdiff --git a/DegreeBlind/backend/app/api/router.py b/DegreeBlind/backend/app/api/router.py[m
+[1mindex 3db1eab..13bbebf 100644[m
+[1m--- a/DegreeBlind/backend/app/api/router.py[m
+[1m+++ b/DegreeBlind/backend/app/api/router.py[m
+[36m@@ -1,8 +1,16 @@[m
+ from fastapi import APIRouter[m
+[31m-from app.api.v1 import analysis, auth, stats, reports[m
+[32m+[m[32mfrom app.api.v1 import analysis, auth, resume, ats, crossref, reports, stats, career, job_match, learning, interview[m
+ [m
+ api_router = APIRouter()[m
+[31m-api_router.include_router(analysis.router, prefix="/analysis", tags=["Analysis"])[m
+[32m+[m
+ api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])[m
+[31m-api_router.include_router(stats.router, prefix="/stats", tags=["Stats"])[m
+[31m-api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])[m
+[32m+[m[32mapi_router.include_router(analysis.router, prefix="/analysis", tags=["GitHub Analysis"])[m
+[32m+[m[32mapi_router.include_router(resume.router, prefix="/resumes", tags=["Resume Intelligence"])[m
+[32m+[m[32mapi_router.include_router(ats.router, prefix="/ats", tags=["ATS Engine"])[m
+[32m+[m[32mapi_router.include_router(crossref.router, prefix="/crossref", tags=["Cross-Reference Engine"])[m
+[32m+[m[32mapi_router.include_router(reports.router, prefix="/reports", tags=["Reports History"])[m
+[32m+[m[32mapi_router.include_router(stats.router, prefix="/stats", tags=["Statistics"])[m
+[32m+[m[32mapi_router.include_router(career.router, prefix="/career", tags=["Career Intelligence Engine"])[m
+[32m+[m[32mapi_router.include_router(job_match.router, prefix="/job-match", tags=["Job Match Engine"])[m
+[32m+[m[32mapi_router.include_router(learning.router, prefix="/learning", tags=["Learning Roadmap Engine"])[m
+[32m+[m[32mapi_router.include_router(interview.router, prefix="/interview", tags=["Interview Engine"])[m
+[1mdiff --git a/DegreeBlind/backend/app/api/v1/analysis.py b/DegreeBlind/backend/app/api/v1/analysis.py[m
+[1mindex 3497010..348d215 100644[m
+[1m--- a/DegreeBlind/backend/app/api/v1/analysis.py[m
+[1m+++ b/DegreeBlind/backend/app/api/v1/analysis.py[m
+[36m@@ -1,26 +1,114 @@[m
+[31m-from fastapi import APIRouter, Depends, Body[m
+[32m+[m[32m"""[m
+[32m+[m[32mAnalysis API routes.[m
+[32m+[m[32mHandles starting GitHub repository analysis and polling status.[m
+[32m+[m[32m"""[m
+[32m+[m[32mimport json[m
+[32m+[m[32mimport logging[m
+[32m+[m[32mfrom fastapi import APIRouter, Depends, BackgroundTasks, HTTPException[m
+ from sqlalchemy.ext.asyncio import AsyncSession[m
+[31m-from pydantic import BaseModel, HttpUrl[m
+[32m+[m[32mfrom sqlalchemy.future import select[m
+[32m+[m[32mfrom pydantic import BaseModel[m
+ [m
+[31m-from app.api.deps import get_db, get_current_user_optional[m
+[32m+[m[32mfrom app.api.deps import get_db, get_current_user_optional, rate_limiter[m
+ from app.services.analysis_service import analysis_service[m
+[31m-from app.schemas.core import FullReport[m
+[31m-from app.db.models import User[m
+[32m+[m[32mfrom app.services.github_service import github_service[m
+[32m+[m[32mfrom app.schemas.core import AnalysisStartResponse, AnalysisStatusResponse, FullReport, RepositoryData[m
+[32m+[m[32mfrom app.schemas.engineering import EngineeringIntelligenceResponse[m
+[32m+[m[32mfrom app.db.models import User, Analysis, Report, Repository[m
+[32m+[m
+[32m+[m[32mlogger = logging.getLogger(__name__)[m
+ [m
+ router = APIRouter()[m
+ [m
+[32m+[m
+ class AnalyzeRequest(BaseModel):[m
+     repo_url: str[m
+ [m
+[31m-@router.post("/analyze", response_model=FullReport)[m
+[32m+[m
+[32m+[m[32m@router.post("/analyze", response_model=AnalysisStartResponse, dependencies=[Depends(rate_limiter)])[m
+ async def analyze_repository([m
+     request: AnalyzeRequest,[m
+[32m+[m[32m    background_tasks: BackgroundTasks,[m
+     db: AsyncSession = Depends(get_db),[m
+     current_user: User | None = Depends(get_current_user_optional)[m
+ ):[m
+     """[m
+[31m-    Triggers the end-to-end analysis of a GitHub repository and returns the FullReport.[m
+[32m+[m[32m    Starts a GitHub repository analysis in the background.[m
+[32m+[m[32m    Returns the analysis ID for status polling.[m
+     """[m
+     user_id = current_user.id if current_user else None[m
+[31m-    report = await analysis_service.analyze_repository(db, request.repo_url, user_id=user_id)[m
+[31m-    return report[m
+[32m+[m[32m    analysis_id = await analysis_service.start_analysis(db, request.repo_url, user_id=user_id)[m
+[32m+[m
+[32m+[m[32m    background_tasks.add_task(analysis_service.run_analysis_background, analysis_id)[m
+[32m+[m
+[32m+[m[32m    return {"analysis_id": analysis_id, "status": "processing"}[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@router.get("/{analysis_id}/status", response_model=AnalysisStatusResponse)[m
+[32m+[m[32masync def get_analysis_status([m
+[32m+[m[32m    analysis_id: int,[m
+[32m+[m[32m    db: AsyncSession = Depends(get_db),[m
+[32m+[m[32m    current_user: User | None = Depends(get_current_user_optional)[m
+[32m+[m[32m):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Polls the status of an ongoing analysis.[m
+[32m+[m[32m    When completed, returns the full report including EngineeringIntelligenceResponse.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    stmt = select(Analysis).where(Analysis.id == analysis_id)[m
+[32m+[m[32m    result = await db.execute(stmt)[m
+[32m+[m[32m    analysis = result.scalar_one_or_none()[m
+[32m+[m
+[32m+[m[32m    if not analysis:[m
+[32m+[m[32m        raise HTTPException(status_code=404, detail="Analysis not found")[m
+[32m+[m
+[32m+[m[32m    if analysis.status != "completed":[m
+[32m+[m[32m        return {"status": analysis.status}[m
+[32m+[m
+[32m+[m[32m    # Fetch report and repository[m
+[32m+[m[32m    stmt = select(Report).where(Report.analysis_id == analysis_id)[m
+[32m+[m[32m    result = await db.execute(stmt)[m
+[32m+[m[32m    report = result.scalar_one_or_none()[m
+[32m+[m
+[32m+[m[32m    stmt = select(Repository).where(Repository.id == analysis.repository_id)[m
+[32m+[m[32m    result = await db.execute(stmt)[m
+[32m+[m[32m    repository = result.scalar_one_or_none()[m
+[32m+[m
+[32m+[m[32m    if not report or not repository:[m
+[32m+[m[32m        return {"status": "failed", "error": "Report data missing"}[m
+[32m+[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        # Fetch live language data[m
+[32m+[m[32m        languages = await github_service.get_languages(repository.owner, repository.repository_name)[m
+[32m+[m
+[32m+[m[32m        # Build repository data[m
+[32m+[m[32m        repo_data = RepositoryData([m
+[32m+[m[32m            name=repository.repository_name,[m
+[32m+[m[32m            owner=repository.owner,[m
+[32m+[m[32m            description=repository.description,[m
+[32m+[m[32m            primaryLanguage=repository.language,[m
+[32m+[m[32m            stars=repository.stars,[m
+[32m+[m[32m            forks=repository.forks,[m
+[32m+[m[32m            openIssues=0,[m
+[32m+[m[32m            defaultBranch=repository.default_branch,[m
+[32m+[m[32m            url=repository.repository_url,[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        # Parse report JSON — it's already an EngineeringIntelligenceResponse dict[m
+[32m+[m[32m        report_data = report.report_json[m
+[32m+[m[32m        if isinstance(report_data, str):[m
+[32m+[m[32m            report_data = json.loads(report_data)[m
+[32m+[m
+[32m+[m[32m        # Validate through Pydantic to ensure schema conformity[m
+[32m+[m[32m        analysis_report = EngineeringIntelligenceResponse(**report_data)[m
+[32m+[m
+[32m+[m[32m        full_report = FullReport([m
+[32m+[m[32m            repository=repo_data,[m
+[32m+[m[32m            languages=languages,[m
+[32m+[m[32m            analysis=analysis_report,[m
+[32m+[m[32m        )[m
+[32m+[m
+[32m+[m[32m        return {"status": "completed", "report": full_report}[m
+[32m+[m
+[32m+[m[32m    except Exception as e:[m
+[32m+[m[32m        logger.exception(f"Failed to build report for analysis {analysis_id}")[m
+[32m+[m[32m        return {"status": "failed", "error": f"Failed to parse report: {str(e)}"}[m
+[1mdiff --git a/DegreeBlind/backend/app/api/v1/auth.py b/DegreeBlind/backend/app/api/v1/auth.py[m
+[1mindex 1436941..90b15f5 100644[m
+[1m--- a/DegreeBlind/backend/app/api/v1/auth.py[m
+[1m+++ b/DegreeBlind/backend/app/api/v1/auth.py[m
+[36m@@ -2,6 +2,7 @@[m [mfrom fastapi import APIRouter, Depends, HTTPException, status[m
+ from fastapi.responses import RedirectResponse[m
+ from sqlalchemy.ext.asyncio import AsyncSession[m
+ import urllib.parse[m
+[32m+[m[32mfrom jose import jwt[m
+ [m
+ from app.db.session import get_db[m
+ from app.core.config import settings[m
+[36m@@ -21,6 +22,20 @@[m [masync def github_login():[m
+     url = f"https://github.com/login/oauth/authorize?{urllib.parse.urlencode(params)}"[m
+     return RedirectResponse(url)[m
+ [m
+[32m+[m[32m@router.get("/google/login")[m
+[32m+[m[32masync def google_login():[m
+[32m+[m[32m    """Redirects user to Google OAuth login."""[m
+[32m+[m[32m    params = {[m
+[32m+[m[32m        "client_id": settings.GOOGLE_CLIENT_ID,[m
+[32m+[m[32m        "response_type": "code",[m
+[32m+[m[32m        "scope": "openid email profile",[m
+[32m+[m[32m        "redirect_uri": "http://localhost:8000/api/v1/auth/google/callback",[m
+[32m+[m[32m        "access_type": "offline",[m
+[32m+[m[32m        "prompt": "consent"[m
+[32m+[m[32m    }[m
+[32m+[m[32m    url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"[m
+[32m+[m[32m    return RedirectResponse(url)[m
+[32m+[m
+ @router.get("/github/callback")[m
+ async def github_callback(code: str, db: AsyncSession = Depends(get_db)):[m
+     """Handles GitHub OAuth callback."""[m
+[36m@@ -60,3 +75,53 @@[m [masync def get_me(current_user: User = Depends(get_current_user)):[m
+         "avatar_url": current_user.avatar_url,[m
+         "provider": current_user.provider[m
+     }[m
+[32m+[m
+[32m+[m[32m@router.get("/google/callback")[m
+[32m+[m[32masync def google_callback(code: str, db: AsyncSession = Depends(get_db)):[m
+[32m+[m[32m    """Handles Google OAuth callback."""[m
+[32m+[m[32m    if not code:[m
+[32m+[m[32m        raise HTTPException(status_code=400, detail="Authorization code is missing")[m
+[32m+[m[41m    [m
+[32m+[m[32m    try:[m
+[32m+[m[32m        user_info = await auth_service.get_google_user(code)[m
+[32m+[m[32m    except Exception as e:[m
+[32m+[m[32m        raise HTTPException(status_code=400, detail=str(e))[m
+[32m+[m[41m    [m
+[32m+[m[32m    user = await auth_service.get_or_create_user([m
+[32m+[m[32m        db=db,[m
+[32m+[m[32m        provider="google",[m
+[32m+[m[32m        provider_id=user_info["provider_id"],[m
+[32m+[m[32m        email=user_info.get("email") or "",[m
+[32m+[m[32m        name=user_info.get("name") or "",[m
+[32m+[m[32m        avatar_url=user_info.get("avatar_url") or ""[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    access_token = auth_service.create_access_token([m
+[32m+[m[32m        data={"sub": str(user.id)}[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    # Redirect back to frontend with the token[m
+[32m+[m[32m    frontend_url = settings.FRONTEND_URL[0] if settings.FRONTEND_URL else "http://localhost:5173"[m
+[32m+[m[32m    redirect_url = f"{frontend_url}/auth/success?token={access_token}"[m
+[32m+[m[32m    return RedirectResponse(url=redirect_url)[m
+[32m+[m
+[32m+[m[32m@router.post("/refresh")[m
+[32m+[m[32masync def refresh_token(refresh_token: str):[m
+[32m+[m[32m    """Issues a new access token given a valid refresh token."""[m
+[32m+[m[32m    # Basic skeleton for refresh logic[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        payload = jwt.decode(refresh_token, settings.JWT_SECRET.get_secret_value(), algorithms=[settings.JWT_ALGORITHM])[m
+[32m+[m[32m        user_id = payload.get("sub")[m
+[32m+[m[32m        if not user_id:[m
+[32m+[m[32m            raise HTTPException(status_code=401, detail="Invalid token")[m
+[32m+[m[41m        [m
+[32m+[m[32m        new_token = auth_service.create_access_token(data={"sub": str(user_id)})[m
+[32m+[m[32m        return {"access_token": new_token, "token_type": "bearer"}[m
+[32m+[m[32m    except Exception:[m
+[32m+[m[32m        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")[m
+[32m+[m
+[32m+[m[32m@router.post("/logout")[m
+[32m+[m[32masync def logout():[m
+[32m+[m[32m    """Logs out the user."""[m
+[32m+[m[32m    # Token revocation would ideally require a Redis blacklist or DB flag[m
+[32m+[m[32m    return {"message": "Successfully logged out"}[m
+[1mdiff --git a/DegreeBlind/backend/app/api/v1/reports.py b/DegreeBlind/backend/app/api/v1/reports.py[m
+[1mindex a505c71..c83c241 100644[m
+[1m--- a/DegreeBlind/backend/app/api/v1/reports.py[m
+[1m+++ b/DegreeBlind/backend/app/api/v1/reports.py[m
+[36m@@ -19,6 +19,7 @@[m [masync def get_report_history([m
+         select(Analysis)[m
+         .options(selectinload(Analysis.repository), selectinload(Analysis.report))[m
+         .where(Analysis.user_id == current_user.id)[m
+[32m+[m[32m        .where(Analysis.is_deleted == False)[m
+         .order_by(Analysis.created_at.desc())[m
+     )[m
+     result = await db.execute(stmt)[m
+[36m@@ -45,3 +46,23 @@[m [masync def get_report_history([m
+             "report_data": a.report.report_json if a.report else None[m
+         })[m
+     return history[m
+[32m+[m
+[32m+[m[32m@router.delete("/{analysis_id}")[m
+[32m+[m[32masync def delete_report([m
+[32m+[m[32m    analysis_id: int,[m
+[32m+[m[32m    db: AsyncSession = Depends(get_db),[m
+[32m+[m[32m    current_user: User = Depends(get_current_user)[m
+[32m+[m[32m):[m
+[32m+[m[32m    """Soft delete a report from history."""[m
+[32m+[m[32m    stmt = select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == current_user.id)[m
+[32m+[m[32m    result = await db.execute(stmt)[m
+[32m+[m[32m    analysis = result.scalar_one_or_none()[m
+[32m+[m[41m    [m
+[32m+[m[32m    if not analysis:[m
+[32m+[m[32m        raise HTTPException(status_code=404, detail="Report not found")[m
+[32m+[m[41m        [m
+[32m+[m[32m    analysis.is_deleted = True[m
+[32m+[m[32m    db.add(analysis)[m
+[32m+[m[32m    await db.commit()[m
+[32m+[m[41m    [m
+[32m+[m[32m    return {"message": "Report deleted successfully"}[m
+[1mdiff --git a/DegreeBlind/backend/app/api/v1/stats.py b/DegreeBlind/backend/app/api/v1/stats.py[m
+[1mindex 6042236..340dada 100644[m
+[1m--- a/DegreeBlind/backend/app/api/v1/stats.py[m
+[1m+++ b/DegreeBlind/backend/app/api/v1/stats.py[m
+[36m@@ -2,9 +2,10 @@[m [mfrom fastapi import APIRouter, Depends[m
+ from sqlalchemy.ext.asyncio import AsyncSession[m
+ from sqlalchemy.future import select[m
+ from sqlalchemy import func[m
+[32m+[m[32mimport json[m
+ [m
+ from app.db.session import get_db[m
+[31m-from app.db.models import Analysis, Repository[m
+[32m+[m[32mfrom app.db.models import Analysis, Repository, Report[m
+ [m
+ router = APIRouter()[m
+ [m
+[36m@@ -20,8 +21,30 @@[m [masync def get_dashboard_stats(db: AsyncSession = Depends(get_db)):[m
+     result2 = await db.execute(stmt2)[m
+     candidates_evaluated = result2.scalar() or 0[m
+ [m
+[31m-    # Average Skill Score (Mocking this for MVP, or calculate if skill score logic exists)[m
+[31m-    average_skill_score = "8.4 / 10" if repositories_analysed > 0 else "N/A"[m
+[32m+[m[32m    # Calculate average skill score from reports[m
+[32m+[m[32m    stmt3 = select(Report.report_json).join(Analysis).where(Analysis.status == "completed")[m
+[32m+[m[32m    result3 = await db.execute(stmt3)[m
+[32m+[m[32m    reports = result3.scalars().all()[m
+[32m+[m[41m    [m
+[32m+[m[32m    total_score = 0[m
+[32m+[m[32m    valid_reports = 0[m
+[32m+[m[32m    for report_data in reports:[m
+[32m+[m[32m        if isinstance(report_data, str):[m
+[32m+[m[32m            try:[m
+[32m+[m[32m                report_data = json.loads(report_data)[m
+[32m+[m[32m            except json.JSONDecodeError:[m
+[32m+[m[32m                continue[m
+[32m+[m[41m                [m
+[32m+[m[32m        if isinstance(report_data, dict) and "engineering_score" in report_data:[m
+[32m+[m[32m            total_score += report_data["engineering_score"][m
+[32m+[m[32m            valid_reports += 1[m
+[32m+[m
+[32m+[m[32m    if valid_reports > 0:[m
+[32m+[m[32m        avg_score = total_score / valid_reports[m
+[32m+[m[32m        # Format out of 10 for display (assuming engineering_score is 0-100)[m
+[32m+[m[32m        average_skill_score = f"{avg_score / 10:.1f} / 10"[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        average_skill_score = "N/A"[m
+ [m
+     return {[m
+         "repositories_analysed": repositories_analysed,[m
+[1mdiff --git a/DegreeBlind/backend/app/db/models.py b/DegreeBlind/backend/app/db/models.py[m
+[1mindex f8467e7..66f70e1 100644[m
+[1m--- a/DegreeBlind/backend/app/db/models.py[m
+[1m+++ b/DegreeBlind/backend/app/db/models.py[m
+[36m@@ -1,5 +1,10 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mSQLAlchemy ORM models for DegreeBlind.[m
+[32m+[m[32mAll models use integer auto-increment PKs for SQLite compatibility.[m
+[32m+[m[32mUUID PKs can be swapped in when migrating to PostgreSQL.[m
+[32m+[m[32m"""[m
+ from datetime import datetime[m
+[31m-from sqlalchemy import String, Integer, DateTime, JSON, ForeignKey[m
+[32m+[m[32mfrom sqlalchemy import String, Integer, Float, DateTime, JSON, ForeignKey, Text, Boolean[m
+ from sqlalchemy.orm import Mapped, mapped_column, relationship[m
+ from sqlalchemy.sql import func[m
+ from app.db.base import Base[m
+[36m@@ -14,10 +19,20 @@[m [mclass User(Base):[m
+     name: Mapped[str | None] = mapped_column(String(255))[m
+     email: Mapped[str | None] = mapped_column(String(255))[m
+     avatar_url: Mapped[str | None] = mapped_column(String(512))[m
+[31m-    [m
+[32m+[m[32m    github_username: Mapped[str | None] = mapped_column(String(255))[m
+[32m+[m[32m    is_active: Mapped[bool] = mapped_column(Boolean, default=True)[m
+[32m+[m
+     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())[m
+     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())[m
+ [m
+[32m+[m[32m    # Relationships[m
+[32m+[m[32m    resumes: Mapped[list["Resume"]] = relationship(back_populates="user")[m
+[32m+[m[32m    cross_references: Mapped[list["CrossReference"]] = relationship(back_populates="user")[m
+[32m+[m[32m    career_reports: Mapped[list["CareerIntelligence"]] = relationship(back_populates="user")[m
+[32m+[m[32m    job_matches: Mapped[list["JobMatch"]] = relationship(back_populates="user")[m
+[32m+[m[32m    learning_roadmaps: Mapped[list["LearningRoadmap"]] = relationship(back_populates="user")[m
+[32m+[m[32m    interview_sessions: Mapped[list["InterviewSession"]] = relationship(back_populates="user")[m
+[32m+[m
+ [m
+ class Repository(Base):[m
+     __tablename__ = "repositories"[m
+[36m@@ -33,7 +48,7 @@[m [mclass Repository(Base):[m
+     stars: Mapped[int | None] = mapped_column(Integer, default=0)[m
+     forks: Mapped[int | None] = mapped_column(Integer, default=0)[m
+     language: Mapped[str | None] = mapped_column(String(100))[m
+[31m-    [m
+[32m+[m
+     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())[m
+     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())[m
+ [m
+[36m@@ -45,12 +60,14 @@[m [mclass Analysis(Base):[m
+ [m
+     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)[m
+     repository_id: Mapped[int] = mapped_column(ForeignKey("repositories.id"), nullable=False)[m
+[31m-    status: Mapped[str] = mapped_column(String(50), default="pending")[m
+[31m-    execution_time: Mapped[float | None] = mapped_column(Integer) # seconds[m
+[32m+[m[32m    status: Mapped[str] = mapped_column(String(50), default="pending")  # pending, 

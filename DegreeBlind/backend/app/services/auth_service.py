@@ -1,5 +1,5 @@
 import httpx
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +12,9 @@ class AuthService:
     def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None):
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
         
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(
@@ -109,6 +109,43 @@ class AuthService:
                 "email": email,
                 "name": user_data.get("name") or user_data.get("login"),
                 "avatar_url": user_data.get("avatar_url")
+            }
+
+
+    async def get_google_user(self, code: str) -> Dict[str, Any]:
+        async with httpx.AsyncClient() as client:
+            # 1. Exchange code for access token
+            token_res = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET.get_secret_value() if settings.GOOGLE_CLIENT_SECRET else "",
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://127.0.0.1:8000/api/v1/auth/google/callback"
+                }
+            )
+            token_res.raise_for_status()
+            token_data = token_res.json()
+            access_token = token_data.get("access_token")
+            if not access_token:
+                raise ValueError("Failed to retrieve access token from Google")
+
+            # 2. Get user profile
+            user_res = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={
+                    "Authorization": f"Bearer {access_token}"
+                }
+            )
+            user_res.raise_for_status()
+            user_data = user_res.json()
+
+            return {
+                "provider_id": str(user_data["id"]),
+                "email": user_data.get("email"),
+                "name": user_data.get("name"),
+                "avatar_url": user_data.get("picture")
             }
 
 auth_service = AuthService()

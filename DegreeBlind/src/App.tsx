@@ -1,38 +1,94 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Dashboard from './pages/Dashboard';
-import AnalysisPage from './pages/AnalysisPage';
-import ReportPage from './pages/ReportPage';
-import About from './pages/About';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query-client';
+import { useAuthStore } from '@/stores/auth-store';
+import { useThemeStore } from '@/stores/theme-store';
 
-import { AuthProvider } from './contexts/AuthContext';
-import AuthCallback from './pages/AuthCallback';
-import ReportsHistoryPage from './pages/ReportsHistoryPage';
+// Layouts
+import { PublicLayout } from '@/layouts/public-layout';
+import { AppLayout } from '@/layouts/app-layout';
 
-function App() {
-  return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <main className="flex-grow">
-          <Routes>
-            {/* Dashboard and Analyse are the same page */}
-            <Route path="/" element={<Dashboard />} />
-            {/* Analysis loading screen (navigated to programmatically from Dashboard) */}
-            <Route path="/analysis" element={<AnalysisPage />} />
-            <Route path="/reports" element={<ReportsHistoryPage />} />
-            <Route path="/report" element={<ReportPage />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/auth/success" element={<AuthCallback />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </BrowserRouter>
-  </AuthProvider>
-  );
+// Pages
+import LandingPage from '@/pages/landing';
+import LoginPage from '@/pages/login';
+import AuthCallback from '@/pages/auth-callback';
+import DashboardPage from '@/pages/dashboard';
+import GitHubPage from '@/pages/github/analyze';
+import GitHubReportPage from '@/pages/github/report';
+import ResumePage from '@/pages/resume';
+import ResumeHistoryPage from '@/pages/resume/history';
+import ATSPage from '@/pages/ats';
+import CareerPage from '@/pages/career';
+import JobMatchPage from '@/pages/job-match';
+import LearningPage from '@/pages/learning';
+import InterviewPage from '@/pages/interview';
+import ReportsPage from '@/pages/reports';
+import SettingsPage from '@/pages/settings';
+import AboutPage from '@/pages/about';
+import { LoadingState } from './components/loading-state';
+
+function RequireAuth() {
+  const { token, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-background"><LoadingState rows={1} /></div>;
+  }
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 }
 
-export default App;
+export default function App() {
+  const { initialize } = useAuthStore();
+  const { theme } = useThemeStore();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+  }, [theme]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+          </Route>
+          
+          <Route path="/auth/success" element={<AuthCallback />} />
+
+          {/* Authenticated Routes */}
+          <Route element={<RequireAuth />}>
+            <Route path="/app" element={<AppLayout />}>
+              <Route index element={<Navigate to="/app/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="github" element={<GitHubPage />} />
+              <Route path="github/report" element={<GitHubReportPage />} />
+              <Route path="resume" element={<ResumePage />} />
+              <Route path="resumes/history" element={<ResumeHistoryPage />} />
+              <Route path="ats" element={<ATSPage />} />
+              <Route path="career" element={<CareerPage />} />
+              <Route path="job-match" element={<JobMatchPage />} />
+              <Route path="learning" element={<LearningPage />} />
+              <Route path="interview" element={<InterviewPage />} />
+              <Route path="reports" element={<ReportsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="about" element={<AboutPage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+}
