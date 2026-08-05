@@ -17,7 +17,7 @@ setup_logging()
 app = FastAPI(
     title="Degree Blind API",
     description="Hire Skills. Not Degrees. Backend for AI-powered GitHub analysis.",
-    version="1.0.0",
+    version="0.02",
 )
 
 # Configure CORS

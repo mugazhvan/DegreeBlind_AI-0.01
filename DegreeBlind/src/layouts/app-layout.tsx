@@ -72,7 +72,10 @@ export function AppLayout() {
           <Link to="/app/dashboard" className="flex items-center gap-2">
             <Logo className="w-7 h-7" />
             {!collapsed && (
-              <span className="text-sm font-semibold text-foreground tracking-tight">DegreeBlind</span>
+              <span className="text-sm font-semibold text-foreground tracking-tight flex items-center gap-1.5">
+                DegreeBlind
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400">v0.02</span>
+              </span>
             )}
           </Link>
         </div>
