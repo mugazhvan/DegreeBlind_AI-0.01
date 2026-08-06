@@ -2,8 +2,6 @@ import os
 import fitz  # PyMuPDF
 import docx
 from io import BytesIO
-import numpy as np
-from PIL import Image
 import logging
 
 logger = logging.getLogger(__name__)
