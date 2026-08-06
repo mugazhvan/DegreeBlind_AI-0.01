@@ -6,8 +6,11 @@ export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">About</h1>
-        <p className="text-sm text-muted-foreground">The creator behind DegreeBlind.</p>
+        <div className="flex items-center gap-2 mb-2">
+          <h1 className="text-3xl font-bold tracking-tight">About</h1>
+          <span className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-400 rounded-full font-semibold">v0.02</span>
+        </div>
+        <p className="text-sm text-muted-foreground">The creator behind DegreeBlind v0.02.</p>
       </div>
 
       <GlassCard className="p-8">
