@@ -47,6 +47,18 @@ class Settings(BaseSettings):
     RATE_LIMIT_GUEST: int = Field(default=5)
     RATE_LIMIT_AUTHENTICATED: int = Field(default=10)
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def parse_database_url(cls, v: str) -> str:
+        """Ensures Supabase/Postgres connection strings use asyncpg dialect."""
+        if isinstance(v, str) and v:
+            v = v.strip()
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("FRONTEND_URL", mode="before")
     @classmethod
     def parse_frontend_urls(cls, v: str | List[str]) -> List[str]:
