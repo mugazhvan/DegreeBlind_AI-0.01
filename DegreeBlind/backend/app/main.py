@@ -56,6 +56,17 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "Internal Server Error"},
     )
 
+@app.on_event("startup")
+async def startup_event():
+    try:
+        from app.db.base import Base
+        from app.db.session import engine
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables verified/created successfully.")
+    except Exception as e:
+        logger.error(f"Error initializing database tables on startup: {e}")
+
 @app.get("/", tags=["Health"])
 async def root():
     """Root health check endpoint."""
